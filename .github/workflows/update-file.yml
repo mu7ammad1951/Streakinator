@@ -1,0 +1,28 @@
+name: Update File
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # This runs the action at midnight UTC every day
+  workflow_dispatch:
+
+jobs:
+  update-file:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.19'
+      
+      - name: Install Dependencies
+        run: |
+          go mod tidy
+      
+      - name: Run the Go Application
+        run: |
+          go run main.go
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token gives the action push access
