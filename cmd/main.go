@@ -2,41 +2,111 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"time"
+
+	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 )
 
+const timeFormat = "Mon, 02 Jan 2006 15:04:05"
+const defaultLoc = "Europe/Paris"
+const filePath = "./data/date.txt"
+
 func main() {
-	outputFilePath := "./data/data.txt"
+	repoPath := "./repo"
 
-	// GMT +1 timezone offset 3600 seconds - 1 hour
-	gmtTimeLoc := time.FixedZone("GMT", 3600)
-
-	// Get current time and convert it to GMT+1
-	currentTime := time.Now().In(gmtTimeLoc).Format("Mon, 02 Jan 2006 15:04:05")
-
-	fmt.Printf("[%v - GMT +1] Waking up! Writing current time and date to %v\n", currentTime, outputFilePath)
-
-	// Making sure the directory we'll write the currentTime value to exists, if not: create it
-	// Setting the filemode to 0755 - owner can read/write/execute, others can read/execute
-	if _, err := os.Stat("./data"); os.IsNotExist(err) {
-		fmt.Printf("[%v - GMT +1] failed to locate directory, creating it now\n", currentTime)
-		err := os.Mkdir("./data", 0755)
-		if err != nil {
-			fmt.Printf("[%v - GMT +1] failed to create directory: %v\n", currentTime, err)
-			return
-		}
-	}
-
-	// Writing the current time to the data.txt file, it uses the 0644 filemode to be read/writeable
-	// for the owner and readable by others
-	err := os.WriteFile(outputFilePath, []byte(fmt.Sprintf("%v", currentTime)), 0644)
+	// Always clone the repository
+	_, err := git.PlainClone(repoPath, false, &git.CloneOptions{
+		URL:      "https://github.com/EmielD/Streakinator",
+		Progress: os.Stdout,
+		Auth: &http.BasicAuth{
+			Username: "Streakinator",
+			Password: os.Getenv("GITHUB_TOKEN"),
+		},
+	})
 	if err != nil {
-		fmt.Printf("[%v - GMT +1] error occurred: %v\n", currentTime, err)
+		fmt.Println("Error cloning repository:", err)
 		return
 	}
 
-	fmt.Printf("[%v - GMT +1] %v has been updated\n", currentTime, outputFilePath)
+	// Log startup message
+	fmt.Printf("Waking up! Writing current time and date to %v\n", filePath)
 
-	// TODO: Everything is done, create a new commit and push to the associated git repository specified in the .env file
+	// Ensure the data directory exists, open the file, and write the current time
+	err = os.MkdirAll("./data", 0755)
+	if err != nil {
+		log.Fatal("Error creating directory:", err)
+	}
+
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		log.Fatal("Error opening file:", err)
+	}
+	defer file.Close()
+
+	// Load time location and file path, or use defaults
+	loc, err := time.LoadLocation(defaultLoc)
+	if err != nil {
+		log.Fatal("Error loading location:", err)
+	}
+
+	currentFormattedTime := time.Now().In(loc).Format(timeFormat)
+	_, err = file.WriteString(currentFormattedTime + "\n")
+	if err != nil {
+		log.Fatal("Error writing to file:", err)
+	}
+
+	// Log file update message
+	fmt.Printf("%v has been updated\n", filePath)
+
+	// Stage the changes
+	repo, err := git.PlainOpen(repoPath)
+	if err != nil {
+		fmt.Println("Error opening repository:", err)
+		return
+	}
+
+	w, err := repo.Worktree()
+	if err != nil {
+		fmt.Println("Error getting worktree:", err)
+		return
+	}
+	_, err = w.Add(".")
+	if err != nil {
+		fmt.Println("Error adding changes:", err)
+		return
+	}
+
+	// Commit the changes
+	commit, err := w.Commit(fmt.Sprintf("Updated text file with date: %v", currentFormattedTime), &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "Streakinator",
+			Email: "bot@bot.bot",
+			When:  time.Now(),
+		},
+	})
+	if err != nil {
+		fmt.Println("Error committing changes:", err)
+		return
+	}
+
+	// Print the commit hash
+	fmt.Println("Commit hash:", commit)
+
+	// Push the changes to the remote repository
+	err = repo.Push(&git.PushOptions{
+		Auth: &http.BasicAuth{
+			Username: "Streakinator",
+			Password: os.Getenv("GITHUB_TOKEN"),
+		},
+	})
+	if err != nil {
+		fmt.Println("Error pushing changes:", err)
+		return
+	}
+
+	fmt.Println("Changes pushed successfully!")
 }
