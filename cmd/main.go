@@ -9,16 +9,22 @@ import (
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/joho/godotenv"
 )
 
 const timeFormat = "Mon, 02 Jan 2006 15:04:05"
 const defaultLoc = "Europe/Paris"
-const filePath = "./data/date.txt"
+const repoPath = "./repo"
+const outputFilePath = repoPath + "/data/date.txt"
 
 func main() {
-	repoPath := "./repo"
 
-	// Always clone the repository
+	// Load environment variables from .env file
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	// Clone the repository
 	_, err := git.PlainClone(repoPath, false, &git.CloneOptions{
 		URL:      "https://github.com/EmielD/Streakinator",
 		Progress: os.Stdout,
@@ -28,41 +34,44 @@ func main() {
 		},
 	})
 	if err != nil {
+		fmt.Println(os.Getenv("GITHUB_TOKEN"))
 		fmt.Println("Error cloning repository:", err)
 		return
 	}
 
-	// Log startup message
-	fmt.Printf("Waking up! Writing current time and date to %v\n", filePath)
-
-	// Ensure the data directory exists, open the file, and write the current time
-	err = os.MkdirAll("./data", 0755)
-	if err != nil {
-		log.Fatal("Error creating directory:", err)
-	}
-
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		log.Fatal("Error opening file:", err)
-	}
-	defer file.Close()
-
-	// Load time location and file path, or use defaults
+	// Load time location and file path
 	loc, err := time.LoadLocation(defaultLoc)
 	if err != nil {
 		log.Fatal("Error loading location:", err)
 	}
 
-	currentFormattedTime := time.Now().In(loc).Format(timeFormat)
-	_, err = file.WriteString(currentFormattedTime + "\n")
+	// Log startup message
+	fmt.Printf("Waking up! Writing current time and date to %v\n", outputFilePath)
+
+	// Ensure the data directory exists
+	err = os.MkdirAll("./data", 0755)
+	if err != nil {
+		log.Fatal("Error creating directory:", err)
+	}
+
+	// Open the file for reading and writing
+	file, err := os.OpenFile(outputFilePath, os.O_RDWR, 0644)
+	if err != nil {
+		log.Fatal("Error opening file:", err)
+	}
+	defer file.Close()
+
+	// Write the current time to the file
+	newContent := time.Now().In(loc).Format(timeFormat) + "\n"
+	_, err = file.WriteString(newContent)
 	if err != nil {
 		log.Fatal("Error writing to file:", err)
 	}
 
 	// Log file update message
-	fmt.Printf("%v has been updated\n", filePath)
+	fmt.Printf("%v has been updated\n", outputFilePath)
 
-	// Stage the changes
+	// Open the repository again
 	repo, err := git.PlainOpen(repoPath)
 	if err != nil {
 		fmt.Println("Error opening repository:", err)
@@ -74,14 +83,28 @@ func main() {
 		fmt.Println("Error getting worktree:", err)
 		return
 	}
+
+	// Stage the changes
 	_, err = w.Add(".")
 	if err != nil {
 		fmt.Println("Error adding changes:", err)
 		return
 	}
 
+	// Check if there are any changes to commit
+	status, err := w.Status()
+	if err != nil {
+		fmt.Println("Error checking status:", err)
+		return
+	}
+
+	if status.IsClean() {
+		fmt.Println("No changes detected, skipping commit.")
+		return
+	}
+
 	// Commit the changes
-	commit, err := w.Commit(fmt.Sprintf("Updated text file with date: %v", currentFormattedTime), &git.CommitOptions{
+	commit, err := w.Commit("Update text file with current date/time", &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  "Streakinator",
 			Email: "bot@bot.bot",
@@ -109,4 +132,11 @@ func main() {
 	}
 
 	fmt.Println("Changes pushed successfully!")
+
+	err = os.Remove(repoPath)
+	if err != nil {
+		fmt.Println("Something went wrong cleaning up the pulled repository: ", err)
+	}
+
+	fmt.Println("Done with cleaning up the pulled repository! Time to sleep... Zzzzz...")
 }
