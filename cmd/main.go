@@ -133,7 +133,7 @@ func main() {
 
 	fmt.Println("Changes pushed successfully!")
 
-	err = os.Remove(repoPath)
+	err = os.RemoveAll(repoPath)
 	if err != nil {
 		fmt.Println("Something went wrong cleaning up the pulled repository: ", err)
 	}
