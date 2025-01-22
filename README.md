@@ -31,11 +31,11 @@ Streakinator is a GitHub automation tool that updates a `.txt` file in your repo
 
 | Name                  | Required | Description                                    |
 |-----------------------|----------|------------------------------------------------|
-| `GITHUB_REPOSITORY_URL` | ✅      | URL of your fork (e.g., `https://github.com/<your-username>/<your-repo>.git`) |
-| `GITHUB_TOKEN`        | ✅      | A GitHub PAT with `repo` permissions.          |
-| `GITHUB_USERNAME`     | ✅      | Your GitHub username.                          |
-| `GITHUB_EMAIL`        | ✅      | Your GitHub email address.                     |
-| `GITHUB_TIMEZONE`     | ❌      | Timezone (e.g., `Europe/Paris`, defaults to UTC). |
+| `S_GITHUB_REPOSITORY_URL` | ✅      | URL of your fork (e.g., `https://github.com/<your-username>/<your-repo>.git`) |
+| `S_GITHUB_TOKEN`        | ✅      | A GitHub PAT with `repo` permissions.          |
+| `S_GITHUB_USERNAME`     | ✅      | Your GitHub username.                          |
+| `S_GITHUB_EMAIL`        | ✅      | Your GitHub email address.                     |
+| `S_GITHUB_TIMEZONE`     | ❌      | Timezone (e.g., `Europe/Paris`, defaults to UTC). |
 
 ---
 
@@ -50,11 +50,11 @@ To run Streakinator locally:
 
 | Variable name                  | Format/example                                  
 |-----------------------|----------|
-|GITHUB_REPOSITORY_URL	| https://github.com/\<your-username>/\<your-repo>.git
-|GITHUB_TOKEN	|  string
-|GITHUB_USERNAME | string
-|GITHUB_EMAIL | your-email@example.com
-|GITHUB_TIMEZONE| Europe/Paris
+|`S_GITHUB_REPOSITORY_URL`	| https://github.com/\<your-username>/\<your-repo>.git
+|`S_GITHUB_TOKEN`	        | string
+|`S_GITHUB_USERNAME`            | string
+|`S_GITHUB_EMAIL`               | your-email@example.com
+|`S_GITHUB_TIMEZONE`            | Europe/Paris
 
 3. Run the program:
 	 ```bash   
