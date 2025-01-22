@@ -13,34 +13,45 @@ import (
 )
 
 const timeFormat = "Mon, 02 Jan 2006 15:04:05"
-const defaultLoc = "Europe/Paris"
 const repoPath = "./repo"
 const outputFilePath = repoPath + "/data/date.txt"
 
 func main() {
+	// Attempt to fetch environment variables
+	repositoryUrl, token, username, email := getEnvironmentVariables()
 
-	// Load environment variables from .env file
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+	// Check if the application is running in GitHub Actions (GITHUB_TOKEN provided)
+	if token == "" {
+		// If the application is running locally; load the .env file
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
+
+		// Re-fetch the environment variables from .env
+		repositoryUrl, token, username, email = getEnvironmentVariables()
+	}
+
+	// Fail fast if any variables are missing
+	if repositoryUrl == "" || token == "" || username == "" || email == "" {
+		log.Fatal("Error: Missing required environment variables.\nEnsure S_GITHUB_REPOSITORY_URL, S_GITHUB_TOKEN, S_GITHUB_USERNAME, and S_GITHUB_EMAIL are set.")
 	}
 
 	// Clone the repository
 	_, err := git.PlainClone(repoPath, false, &git.CloneOptions{
-		URL:      "https://github.com/EmielD/Streakinator",
+		URL:      repositoryUrl,
 		Progress: os.Stdout,
 		Auth: &http.BasicAuth{
-			Username: "Streakinator",
-			Password: os.Getenv("GITHUB_TOKEN"),
+			Username: username,
+			Password: token,
 		},
 	})
 	if err != nil {
-		fmt.Println(os.Getenv("GITHUB_TOKEN"))
-		fmt.Println("Error cloning repository:", err)
-		return
+		log.Fatalf("Error cloning repository into path %s: %v\n", repoPath, err)
 	}
 
 	// Load time location and file path
-	loc, err := time.LoadLocation(defaultLoc)
+	loc, err := time.LoadLocation(os.Getenv("TIMEZONE"))
 	if err != nil {
 		log.Fatal("Error loading location:", err)
 	}
@@ -74,28 +85,24 @@ func main() {
 	// Open the repository again
 	repo, err := git.PlainOpen(repoPath)
 	if err != nil {
-		fmt.Println("Error opening repository:", err)
-		return
+		log.Fatal("Error opening repository:", err)
 	}
 
 	w, err := repo.Worktree()
 	if err != nil {
-		fmt.Println("Error getting worktree:", err)
-		return
+		log.Fatal("Error getting worktree:", err)
 	}
 
 	// Stage the changes
 	_, err = w.Add(".")
 	if err != nil {
-		fmt.Println("Error adding changes:", err)
-		return
+		log.Fatal("Error adding changes:", err)
 	}
 
-	// Check if there are any changes to commit
+	// Check if there are any unstaged changes in the working tree
 	status, err := w.Status()
 	if err != nil {
-		fmt.Println("Error checking status:", err)
-		return
+		log.Fatal("Error checking status:", err)
 	}
 
 	if status.IsClean() {
@@ -104,15 +111,16 @@ func main() {
 	}
 
 	// Commit the changes
-	commit, err := w.Commit("Update text file with current date/time", &git.CommitOptions{
+	commitMessage := fmt.Sprintf("[Streakinator] Updated date.txt to the current date: %s", newContent)
+	commit, err := w.Commit(commitMessage, &git.CommitOptions{
 		Author: &object.Signature{
-			Name:  "Streakinator",
-			Email: "bot@bot.bot",
+			Name:  username,
+			Email: email,
 			When:  time.Now(),
 		},
 	})
 	if err != nil {
-		fmt.Println("Error committing changes:", err)
+		log.Fatal("Error committing changes:", err)
 		return
 	}
 
@@ -120,23 +128,37 @@ func main() {
 	fmt.Println("Commit hash:", commit)
 
 	// Push the changes to the remote repository
-	err = repo.Push(&git.PushOptions{
-		Auth: &http.BasicAuth{
-			Username: "Streakinator",
-			Password: os.Getenv("GITHUB_TOKEN"),
-		},
-	})
+	for i := 0; i < 3; i++ {
+		err = repo.Push(&git.PushOptions{
+			Auth: &http.BasicAuth{
+				Username: username,
+				Password: token,
+			},
+		})
+		if err == nil {
+			fmt.Println("Changes pushed successfully!")
+			break
+		}
+		fmt.Printf("Error pushing changes (attempt %d): %v\n", i+1, err)
+		time.Sleep(2 * time.Second) // Wait before retrying
+	}
 	if err != nil {
-		fmt.Println("Error pushing changes:", err)
-		return
+		log.Fatal("Failed to push changes after 3 attempts:", err)
 	}
 
-	fmt.Println("Changes pushed successfully!")
-
-	err = os.RemoveAll(repoPath)
-	if err != nil {
-		fmt.Println("Something went wrong cleaning up the pulled repository: ", err)
-	}
+	defer func() {
+		err := os.RemoveAll(repoPath)
+		if err != nil {
+			log.Fatalf("Error cleaning up repoPath %s: %v\n", repoPath, err)
+		}
+	}()
 
 	fmt.Println("Done with cleaning up the pulled repository! Time to sleep... Zzzzz...")
+}
+
+func getEnvironmentVariables() (string, string, string, string) {
+	return os.Getenv("S_GITHUB_REPOSITORY_URL"),
+		os.Getenv("S_GITHUB_TOKEN"),
+		os.Getenv("S_GITHUB_USERNAME"),
+		os.Getenv("S_GITHUB_EMAIL")
 }
