@@ -11,6 +11,16 @@
 Streakinator is a GitHub automation tool that updates a `.txt` file in your repository with the current date and time every 24 hours. It automates commits and pushes to keep your Boot.Dev study streak alive.
 
 
+
+> **⚠ Important Note:**  
+> If you're new to programming and trying to build the habit of coding regularly, you should **NOT** use this tool!  
+>  
+> Consistency and personal effort are key to developing programming skills, and relying on automation defeats the purpose of building healthy habits.  
+>  
+> This tool is not meant for cheating—it's meant for those who already know what they’re doing but are too lazy to worry about keeping their streak up every day.
+
+
+
 ## Features
 - Clones the repository to a local directory.
 - Updates `data/date.txt` with the current date and time.
