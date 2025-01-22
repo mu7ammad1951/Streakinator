@@ -23,6 +23,6 @@ jobs:
       
       - name: Run the Go Application
         run: |
-          go run main.go
+          go run cmd/main.go
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token gives the action push access
