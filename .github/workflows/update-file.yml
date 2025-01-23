@@ -25,4 +25,9 @@ jobs:
         run: |
           go run cmd/main.go
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token gives the action push access
+          S_GITHUB_REPOSITORY_URL: ${{ secrets.S_GITHUB_REPOSITORY_URL }}
+          S_GITHUB_TOKEN: ${{ secrets.S_GITHUB_TOKEN }}
+          S_GITHUB_USERNAME: ${{ secrets.S_GITHUB_USERNAME }}
+          S_GITHUB_EMAIL: ${{ secrets.S_GITHUB_EMAIL }}
+          S_GITHUB_TIMEZONE: ${{ secrets.S_GITHUB_TIMEZONE }}
+          
