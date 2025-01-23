@@ -31,13 +31,16 @@ Streakinator is a GitHub automation tool that updates a `.txt` file in your repo
 
 ## 📦 **Setup Instructions**  
 
-### **1. 🍴 Fork This Repository**  
+### **1. 🧸 Make sure your Boot.Dev account is in sync with GitHub**  
+- On Boot.Dev -> Settings -> Account Syncing (GitHub).  
+
+### **2. 🍴 Fork This Repository**  
 - Click **Fork** in the top-right corner to create your own copy.  
 
-### **2. ⚙️ Enable GitHub Actions**  
+### **3. ⚙️ Enable GitHub Actions**  
 - Go to the **Actions** tab in your fork and click **Enable Actions**.  
 
-### **3. 🔑 Add Repository Secrets**  
+### **4. 🔑 Add Repository Secrets**  
 - Go to **Settings > Secrets and variables > Actions**, then add the following secrets:  
 
 | Name                  | Required | Description                                    |  
