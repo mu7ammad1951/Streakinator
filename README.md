@@ -60,7 +60,7 @@ To run Streakinator locally:
 
 | Variable name                  | Format/example                                  
 |-----------------------|----------|
-|`S_GITHUB_REPOSITORY_URL`	| https://github.com/\<your-username>/\<your-repo>.git
+|`S_GITHUB_REPOSITORY_URL`	| https://github.com/\\<your-username>/<your-repo>.git
 |`S_GITHUB_TOKEN`	        | string
 |`S_GITHUB_USERNAME`            | string
 |`S_GITHUB_EMAIL`               | your-email@example.com
