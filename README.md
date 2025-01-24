@@ -8,7 +8,8 @@
                                                                                                
 ```
 
-![Made with Go and LOVE](https://img.shields.io/badge/Made%20with%20Go%20and-LOVE-blue?logo=go)  
+![Made with Go and LOVE](https://img.shields.io/badge/Made%20with%20Go%20and-LOVE-blue?logo=go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/emield/streakinator)](https://goreportcard.com/report/github.com/emield/streakinator)
 
 Streakinator is a GitHub automation tool that updates a `.txt` file in your repository with the current date and time every 24 hours. It automates commits and pushes to keep your Boot.Dev study streak alive.
 
